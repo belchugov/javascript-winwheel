@@ -1,29 +1,29 @@
 /*
-    Winwheel.js, by Douglas McKechie @ www.dougtesting.net
-    See website for tutorials and other documentation.
+ Winwheel.js, by Douglas McKechie @ www.dougtesting.net
+ See website for tutorials and other documentation.
 
-    The MIT License (MIT)
+ The MIT License (MIT)
 
-    Copyright (c) 2017 Douglas McKechie
+ Copyright (c) 2017 Douglas McKechie
 
-    Permission is hereby granted, free of charge, to any person obtaining a copy
-    of this software and associated documentation files (the "Software"), to deal
-    in the Software without restriction, including without limitation the rights
-    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-    copies of the Software, and to permit persons to whom the Software is
-    furnished to do so, subject to the following conditions:
+ Permission is hereby granted, free of charge, to any person obtaining a copy
+ of this software and associated documentation files (the "Software"), to deal
+ in the Software without restriction, including without limitation the rights
+ to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ copies of the Software, and to permit persons to whom the Software is
+ furnished to do so, subject to the following conditions:
 
-    The above copyright notice and this permission notice shall be included in all
-    copies or substantial portions of the Software.
+ The above copyright notice and this permission notice shall be included in all
+ copies or substantial portions of the Software.
 
-    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-    SOFTWARE.
-*/
+ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ SOFTWARE.
+ */
 
 // ====================================================================================================================
 // The constructor for the WinWheel object, a JOSN-like array of options can be passed in.
@@ -693,8 +693,8 @@ Winwheel.prototype.drawSegments = function()
                     }
                     else
                     {
-                       //++ do need to draw the starting line in the correct x + y based on the start angle
-                       //++ otherwise as seen when the wheel does not use up 360 the starting segment is missing the stroked side,
+                        //++ do need to draw the starting line in the correct x + y based on the start angle
+                        //++ otherwise as seen when the wheel does not use up 360 the starting segment is missing the stroked side,
                     }
 
                     // Draw the outer arc of the segment clockwise in direction -->
@@ -1300,8 +1300,8 @@ Winwheel.prototype.drawSegmentText = function()
 
                             // Set the angle to increment by when looping though and outputting the characters in the text
                             // as we do this by rotating the wheel small amounts adding each character.
-                            var anglePerChar = 0;
                             var drawAngle = 0;
+                            var drawAngles = [];
 
                             // If more than one character in the text then...
                             if (lines[i].length > 1)
@@ -1309,23 +1309,16 @@ Winwheel.prototype.drawSegmentText = function()
                                 // Text is drawn from the left.
                                 this.ctx.textAlign = 'left';
 
-                                // Work out how much angle the text rendering loop below needs to rotate by for each character to render them next to each other.
-                                // I have discovered that 4 * the font size / 10 at 100px radius is the correct spacing for between the characters
-                                // using a monospace font, non monospace may look a little odd as in there will appear to be extra spaces between chars.
-                                anglePerChar = (4 * (fontSize / 10));
-
-                                // Work out what percentage the radius the text will be drawn at is of 100px.
-                                radiusPercent = (100 / radius);
-
-                                // Then use this to scale up or down the anglePerChar value.
-                                // When the radius is less than 100px we need more angle between the letters, when radius is greater (so the text is further
-                                // away from the center of the wheel) the angle needs to be less otherwise the characters will appear further apart.
-                                anglePerChar = (anglePerChar * radiusPercent);
-
                                 // Next we want the text to be drawn in the middle of the segment, without this it would start at the beginning of the segment.
                                 // To do this we need to work out how much arc the text will take up in total then subtract half of this from the center
                                 // of the segment so that it sits centred.
-                                totalArc = (anglePerChar * lines[i].length);
+                                var totalArc = 0;
+                                for (c = 0; c < lines[i].length; c++) {
+                                    character = lines[i].charAt(c);
+                                    var newAngle = Math.atan((this.ctx.measureText(character).width + 5) / (radius - lineOffset)) * 180.0 / Math.PI;
+                                    drawAngles[c] = newAngle;
+                                    totalArc += newAngle;
+                                }
 
                                 // Now set initial draw angle to half way between the start and end of the segment.
                                 drawAngle = seg.startAngle + (((seg.endAngle - seg.startAngle) / 2) - (totalArc / 2));
@@ -1355,18 +1348,21 @@ Winwheel.prototype.drawSegmentText = function()
                                 // Rotate the wheel to the draw angle as we need to add the character at this location.
                                 this.ctx.translate(this.centerX, this.centerY);
                                 this.ctx.rotate(this.degToRad(drawAngle));
-                                this.ctx.translate(-this.centerX, -this.centerY);
 
-                                // Now draw the character directly above the center point of the wheel at the appropriate radius.
+                                // Move to the draw position, and rotate a little to compensate for the arc of the segment
+                                this.ctx.translate(3, (radius + lineOffset) * -1);
+                                this.ctx.rotate(this.degToRad(5));
+
+                                // Now draw the character
                                 if (strokeStyle)
-                                    this.ctx.strokeText(character, this.centerX , this.centerY - radius + lineOffset);
+                                    this.ctx.strokeText(character, 0, 0);
 
                                 if (fillStyle)
-                                    this.ctx.fillText(character, this.centerX, this.centerY - radius + lineOffset);
+                                    this.ctx.fillText(character, 0, 0);
 
-                                // Increment the drawAngle by the angle per character so next loop we rotate
+                                // Increment the drawAngle by the space taken by the character so next loop we rotate
                                 // to the next angle required to draw the character at.
-                                drawAngle += anglePerChar;
+                                drawAngle += drawAngles[c];
 
                                 this.ctx.restore();
                             }
@@ -1996,7 +1992,7 @@ Winwheel.prototype.getRandomForSegment = function(segmentNumber)
             }
             else
             {
-               console.log('Segment size is too small to safely get random angle inside it');
+                console.log('Segment size is too small to safely get random angle inside it');
             }
         }
         else
