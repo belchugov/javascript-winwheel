@@ -651,8 +651,6 @@ Winwheel.prototype.drawSegments = function()
                 seg = this.segments[x];
 
                 var fillStyle;
-                var lineWidth;
-                var strokeStyle;
 
                 // Set the variables that defined in the segment, or use the default options.
                 if (seg.fillStyle !== null)
@@ -662,24 +660,9 @@ Winwheel.prototype.drawSegments = function()
 
                 this.ctx.fillStyle = fillStyle;
 
-                if (seg.lineWidth !== null)
-                    lineWidth = seg.lineWidth;
-                else
-                    lineWidth = this.lineWidth;
-
-                this.ctx.lineWidth = lineWidth;
-
-                if (seg.strokeStyle !== null)
-                    strokeStyle = seg.strokeStyle;
-                else
-                    strokeStyle = this.strokeStyle;
-
-                this.ctx.strokeStyle = strokeStyle;
-
-
                 // Check there is a strokeStyle or fillStyle, if either the the segment is invisible so should not
                 // try to draw it otherwise a path is began but not ended.
-                if ((strokeStyle) || (fillStyle))
+                if (fillStyle)
                 {
                     // ----------------------------------
                     // Begin a path as the segment consists of an arc and 2 lines.
@@ -721,7 +704,74 @@ Winwheel.prototype.drawSegments = function()
                     // For example no stroke style so no lines to be drawn.
                     if (fillStyle)
                         this.ctx.fill();
+                }
+            }
 
+            for (x = 1; x <= this.numSegments; x ++)
+            {
+                // Get the segment object as we need it to read options from.
+                seg = this.segments[x];
+
+                var lineWidth;
+                var strokeStyle;
+
+                if (seg.lineWidth !== null)
+                    lineWidth = seg.lineWidth;
+                else
+                    lineWidth = this.lineWidth;
+
+                this.ctx.lineWidth = lineWidth;
+
+                if (seg.strokeStyle !== null)
+                    strokeStyle = seg.strokeStyle;
+                else
+                    strokeStyle = this.strokeStyle;
+
+                this.ctx.strokeStyle = strokeStyle;
+
+
+                // Check there is a strokeStyle or fillStyle, if either the the segment is invisible so should not
+                // try to draw it otherwise a path is began but not ended.
+                if (strokeStyle)
+                {
+                    // ----------------------------------
+                    // Begin a path as the segment consists of an arc and 2 lines.
+                    this.ctx.beginPath();
+
+                    // If don't have an inner radius then move to the center of the wheel as we want a line out from the center
+                    // to the start of the arc for the outside of the wheel when we arc. Canvas will draw the connecting line for us.
+                    if (!this.innerRadius)
+                    {
+                        this.ctx.moveTo(this.centerX, this.centerY);
+                    }
+                    else
+                    {
+                        //++ do need to draw the starting line in the correct x + y based on the start angle
+                        //++ otherwise as seen when the wheel does not use up 360 the starting segment is missing the stroked side,
+                    }
+
+                    // Draw the outer arc of the segment clockwise in direction -->
+                    this.ctx.arc(this.centerX, this.centerY, this.outerRadius, this.degToRad(seg.startAngle + this.rotationAngle - 90), this.degToRad(seg.endAngle + this.rotationAngle - 90), false);
+
+                    if (this.innerRadius)
+                    {
+                        // Draw another arc, this time anticlockwise <-- at the innerRadius between the end angle and the start angle.
+                        // Canvas will draw a connecting line from the end of the outer arc to the beginning of the inner arc completing the shape.
+
+                        //++ Think the reason the lines are thinner for 2 of the segments is because the thing auto chops part of it
+                        //++ when doing the next one. Again think that actually drawing the lines will help.
+
+                        this.ctx.arc(this.centerX, this.centerY, this.innerRadius, this.degToRad(seg.endAngle + this.rotationAngle - 90), this.degToRad(seg.startAngle + this.rotationAngle - 90), true);
+                    }
+                    else
+                    {
+                        // If no inner radius then we draw a line back to the center of the wheel.
+                        this.ctx.lineTo(this.centerX, this.centerY);
+                    }
+
+                    // Fill and stroke the segment. Only do either if a style was specified, if the style is null then
+                    // we assume the developer did not want that particular thing.
+                    // For example no stroke style so no lines to be drawn.
                     if (strokeStyle)
                         this.ctx.stroke();
                 }
